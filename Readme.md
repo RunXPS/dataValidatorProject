@@ -1,6 +1,6 @@
 Readme 
 
-parsing tools: beautiful soup, selenium
+parsing tools: beautiful soup, selenium \n
 inspect -> search for class
 
 task 1 for this week:
