@@ -11,7 +11,6 @@ def NC_business_search(company_name: str, founders: list[str]):
         driver.get("https://icis.corp.delaware.gov/Ecorp/EntitySearch/NameSearch.aspx")
         # driver.get("https://www.sosnc.gov/online_services/search/by_title/_Business_Registration")
         # Input Search
-        ctl00_ContentPlaceHolder1_frmEntityName
         # search_field = driver.find_element(by=By.ID, value="SearchCriteria").send_keys(company_name)
         search_field = driver.find_element(by=By.ID, value="ctl00_ContentPlaceHolder1_frmEntityName").send_keys(company_name)
         # Submit Search
