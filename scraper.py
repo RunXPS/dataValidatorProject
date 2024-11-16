@@ -15,7 +15,6 @@ driver.get("https://www.sosnc.gov/online_services/search/by_title/_Business_Regi
 # Locate search bar on the website
 input_element = driver.find_element(By.ID, 'SearchCriteria')
 input_element.send_keys('acta solutions llc', Keys.ENTER)
-
 time.sleep(10)
 
 driver.quit()
