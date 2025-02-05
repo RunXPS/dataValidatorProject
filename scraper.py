@@ -5,6 +5,7 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support.ui import Select
 from selenium.webdriver.support import expected_conditions as EC
 import time
 import pandas as pd
@@ -18,8 +19,8 @@ companies_unique = companies.drop_duplicates(subset='Company')
 company_names = companies_unique['Company']
 print(company_names)
 # Initialize WebDriver
-service = Service(executable_path="/usr/local/bin/chromedriver") # Copy path to chromedriver here
-driver = webdriver.Chrome(service=service)
+service = Service(executable_path="chromedriver.exe") # Copy path to chromedriver here
+driver = webdriver.Chrome()
 
 def search_nc_businesses(company_names):
     driver = webdriver.Chrome()  # Make sure you have ChromeDriver installed
@@ -30,6 +31,16 @@ def search_nc_businesses(company_names):
             # Navigate to NC Secretary of State business search page
             driver.get("https://www.sosnc.gov/online_services/search/by_title/_Business_Registration")
             
+            
+            select_element = driver.find_element(By.ID, 'Words')
+            # Create a Select object
+            select = Select(select_element)
+            try:
+                select.select_by_value("EXACT")
+                print("Selected by exact name")
+            except NoSuchElementException: # type: ignore
+                print("Option not found.")
+
             # Locate search bar on the website
             input_element = driver.find_element(By.ID, 'SearchCriteria')
             input_element.send_keys(company, Keys.ENTER)
@@ -85,7 +96,7 @@ def search_nc_businesses(company_names):
 search_results = search_nc_businesses(company_names)
 ncsos_result = pd.DataFrame(search_results, columns=['company', 'result', 'sosid', 'Date Formed', 'Status', 'Type'])
 
-# If you want to rename the columns to make them more consistent:
+# rename the columns to make them more consistent:
 ncsos_result = ncsos_result.rename(columns={
     'company': 'Company',
     'result': 'Records_Found',
