@@ -7,8 +7,15 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import (
+    TimeoutException,
+    NoSuchElementException,
+    ElementClickInterceptedException,
+    StaleElementReferenceException,
+)
 import time
 import pandas as pd
+import logging
 
 # reading the list
 file_path = 'AI project - Confidential UNC Startups 10162024.xls (1).csv'
@@ -55,7 +62,7 @@ def search_nc_businesses(company_names):
                 time.sleep(3)  # Keep the pause for stability
                 
                 # Find the wrapper div and get the first span with the record count
-                wrapper = driver.find_element(By.CLASS_NAME, "wrapper.pad-none")
+                wrapper = driver.find_element(By.CLASS_NAME, "usa-section")
                 records_span = wrapper.find_element(By.TAG_NAME, "span")
                 span_text = records_span.text
                 
@@ -63,47 +70,106 @@ def search_nc_businesses(company_names):
                 record_count = number if number else "0"
 
                 if int(record_count) > 0:
-                    wrapper2 = driver.find_element(By.CSS_SELECTOR, "tr[style*='border-bottom:thick']")
-                    tds = wrapper2.find_elements(By.TAG_NAME, "td")
+                    try:
+                        # Wait until the results section is present
+                        results_section = WebDriverWait(driver, 10).until(
+                            EC.presence_of_element_located((By.ID, "resultsSection")))
+                        print("Results section found.")
+        
+                        # Locate all accordion headings (buttons) within the results section
+                        accordion_buttons = results_section.find_elements(By.CSS_SELECTOR, ".usa-accordion__heading .usa-accordion__button")
+                        print(f"Found {len(accordion_buttons)} accordion buttons.")
+        
+                        data = []  # List to store extracted data
 
+                        for index, button in enumerate(accordion_buttons, start=1):
+                            try:
+                                # Scroll the button into view
+                                driver.execute_script("arguments[0].scrollIntoView(true);", button)
+                                time.sleep(0.5)  # Brief pause to ensure scrolling is complete
                 
-                results.append({
-                    'company': company,
-                    'result': record_count,
-                    'sosid': tds[0].text if tds[0] else 'na',
-                    'Date Formed': tds[1].text if tds[1] else 'na',
-                    'Status': tds[2].text if tds[2] else 'na',
-                    'Type': tds[3].text if tds[3] else 'na'
+                                # Click the button if it's not already expanded
+                                is_expanded = button.get_attribute("aria-expanded")
+                                if is_expanded.lower() != "true":
+                                    button.click()
+                                    print(f"Clicked accordion button {index}.")
+                                    time.sleep(1)  # Wait for the content to expand
+                                else:
+                                    print(f"Accordion button {index} is already expanded.")
+                
+                                # Locate the corresponding content div using aria-controls attribute
+                                aria_controls = button.get_attribute("aria-controls")
+                                content_div = results_section.find_element(By.ID, aria_controls)
+                
+                                # Wait until the content div is visible
+                                WebDriverWait(driver, 10).until(
+                                    EC.visibility_of(content_div)
+                                )
+                
+                                # Extract required information from the content div
+                                legal_name = extract_field(content_div, "Legal")
+                                sosid = extract_field(content_div, "Sosid:")
+                                date_formed = extract_field(content_div, "Date formed:")
+                                status = extract_field(content_div, "Status:")
+                
+                                # Append the extracted data to the list
+                                data.append({
+                                    "Legal Name": legal_name,
+                                    "SOSID": sosid,
+                                    "Date Formed": date_formed,
+                                    "Status": status
+                                })
+                                for record in data:
+                                    for key, value in record.items():
+                                        # Replace non-breaking spaces with regular spaces
+                                        value = value.replace('\xa0', ' ')
+                                        # Remove unnecessary prefixes (e.g., 'name: ' from 'Legal Name')
+                                        if key == 'Legal Name' and 'name: ' in value:
+                                            value = value.replace('name: ', '')
+                                        # Strip leading and trailing whitespace
+                                        record[key] = value.strip()
+                                        
+                                print(f"Extracted data for item {index}: {data[-1]}")
+                            
+                            except (NoSuchElementException, TimeoutException, StaleElementReferenceException) as e:
+                                print(f"Error processing accordion button {index}: {e}")
+                                continue  # Proceed to the next button
+                            except Exception as e:
+                                print(f"Unexpected error for accordion button {index}: {e}")
+                                continue
 
-                })
-
+                    except TimeoutException:
+                        print("Timeout: Results section not found.")
+                        return []
+                    except Exception as e:
+                        logging.error(f"An unexpected error occurred while extracting information: {e}")
+                        return []
             except Exception as e:
                 print(f"Specific error: {str(e)}")
                 results.append({
                     'company': company,
                     'result': 'No results found'
                 })
-                
         except Exception as e:
             results.append({
                 'company': company,
                 'result': f'Error: {str(e)}'
-            })
-    
+            }) 
     driver.quit()
-    return results
+    return results        
+
+def extract_field(content_div, field_label):
+    try:
+        # Locate the div containing the field label
+        field_div = content_div.find_element(By.XPATH, f".//div[span[@class='boldSpan' and contains(text(), '{field_label}')]]")
+        # Extract the text after the label
+        field_text = field_div.get_attribute("innerText").split(field_label)[-1].strip()
+        return field_text
+    except NoSuchElementException:
+        print(f"Field '{field_label}' not found.")
+        return ""
 
 search_results = search_nc_businesses(company_names)
-ncsos_result = pd.DataFrame(search_results, columns=['company', 'result', 'sosid', 'Date Formed', 'Status', 'Type'])
 
-# rename the columns to make them more consistent:
-ncsos_result = ncsos_result.rename(columns={
-    'company': 'Company',
-    'result': 'Records_Found',
-    'sosid': 'SOS_ID',
-    'Date Formed': 'Date_Formed',
-    'Status': 'Status',
-    'Type': 'Business_Type'
-})
-
-ncsos_result.to_csv('ncsos_results.csv', index=False)
+while True:
+    pass
