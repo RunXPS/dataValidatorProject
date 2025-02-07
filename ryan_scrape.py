@@ -11,6 +11,8 @@ def DW_business_search(company_name: str):
     service = Service(executable_path = "chromedriver.exe")
     driver = webdriver.Chrome(service = service)
 # <input id="SearchCriteria" name="SearchCriteria" type="text" value="" autocomplete="off">
+
+    # Opens Website
     try:
         # Open Site
         driver.get("https://icis.corp.delaware.gov/Ecorp/EntitySearch/NameSearch.aspx")
@@ -31,6 +33,46 @@ def DW_business_search(company_name: str):
                 return f"No records found for {company_name}."
         except:
                 return f"Records available for {company_name}."
+        
+        # Clocks links of table
+        try:
+            table = driver.find_element(By.ID, "tblResults")  # Locate results table
+            company_links = table.find_elements(By.XPATH, "//a[contains(@id, 'lnkbtnEntityName')]")  # Get all entity links
+            
+            company_details = []
+            for i in range(len(company_links)):
+                # Refresh company links since elements get stale after navigation
+                table = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_gvResults")
+                company_links = table.find_elements(By.XPATH, "//a[contains(@id, 'lnkbtnEntityName')]")
+
+                link = company_links[i]
+                link_text = link.text
+                print(f"Clicking on: {link_text}")
+                
+                # Click the link
+                driver.execute_script("arguments[0].click();", link)
+                time.sleep(3)  # Wait for page load
+
+                # Extract Company Details
+                details = {"Company Name": link_text}
+                try:
+                    details["File Number"] = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_lblFileNumber").text
+                    details["Entity Kind"] = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_lblEntityKind").text
+                    details["Incorporation Date"] = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_lblIncDate").text
+                except Exception as e:
+                    details["Error"] = f"Error extracting data: {e}"
+
+                company_details.append(details)
+
+                # Navigate back to results page
+                driver.back()
+                time.sleep(3)  # Wait for reload
+
+            return company_details  # Return details of all companies found
+        except Exception as e:
+            return {"Company Name": company_name, "Status": "Error extracting data", "Error": str(e)}
+        
+
     finally:
         driver.quit
         
