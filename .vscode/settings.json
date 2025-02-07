@@ -1,0 +1,5 @@
+{
+    "python.analysis.extraPaths": [
+        "./selenium-3.141.0"
+    ]
+}
