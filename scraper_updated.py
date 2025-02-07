@@ -1,4 +1,4 @@
-'Selenium Practice'
+'Selenium Test'
 
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -79,8 +79,6 @@ def search_nc_businesses(company_names):
                         # Locate all accordion headings (buttons) within the results section
                         accordion_buttons = results_section.find_elements(By.CSS_SELECTOR, ".usa-accordion__heading .usa-accordion__button")
                         print(f"Found {len(accordion_buttons)} accordion buttons.")
-        
-                        data = []  # List to store extracted data
 
                         for index, button in enumerate(accordion_buttons, start=1):
                             try:
@@ -93,7 +91,7 @@ def search_nc_businesses(company_names):
                                 if is_expanded.lower() != "true":
                                     button.click()
                                     print(f"Clicked accordion button {index}.")
-                                    time.sleep(1)  # Wait for the content to expand
+                                    time.sleep(0.5)  # Wait for the content to expand
                                 else:
                                     print(f"Accordion button {index} is already expanded.")
                 
@@ -102,7 +100,7 @@ def search_nc_businesses(company_names):
                                 content_div = results_section.find_element(By.ID, aria_controls)
                 
                                 # Wait until the content div is visible
-                                WebDriverWait(driver, 10).until(
+                                WebDriverWait(driver, 1).until(
                                     EC.visibility_of(content_div)
                                 )
                 
@@ -113,13 +111,15 @@ def search_nc_businesses(company_names):
                                 status = extract_field(content_div, "Status:")
                 
                                 # Append the extracted data to the list
-                                data.append({
+                                results.append({
                                     "Legal Name": legal_name,
+                                    "Records Found": record_count,
                                     "SOSID": sosid,
                                     "Date Formed": date_formed,
                                     "Status": status
+
                                 })
-                                for record in data:
+                                for record in results:
                                     for key, value in record.items():
                                         # Replace non-breaking spaces with regular spaces
                                         value = value.replace('\xa0', ' ')
@@ -129,7 +129,7 @@ def search_nc_businesses(company_names):
                                         # Strip leading and trailing whitespace
                                         record[key] = value.strip()
                                         
-                                print(f"Extracted data for item {index}: {data[-1]}")
+                                print(f"Extracted data for item {index}: {results[-1]}")
                             
                             except (NoSuchElementException, TimeoutException, StaleElementReferenceException) as e:
                                 print(f"Error processing accordion button {index}: {e}")
@@ -170,6 +170,7 @@ def extract_field(content_div, field_label):
         return ""
 
 search_results = search_nc_businesses(company_names)
-
+ncsos_result = pd.DataFrame(search_results, columns=['Company', 'Records', 'Sosid', 'Date Formed', 'Status'])
+ncsos_result.to_csv('ncsos_results.csv', index=False)
 while True:
     pass
