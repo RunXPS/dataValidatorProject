@@ -5,10 +5,14 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from webdriver_manager.chrome import ChromeDriverManager
+
+
 import time
 
+
 def DW_business_search(company_name: str):
-    service = Service(executable_path = "chromedriver.exe")
+    service = Service(executable_path="chromedriver.exe")
     driver = webdriver.Chrome(service = service)
 # <input id="SearchCriteria" name="SearchCriteria" type="text" value="" autocomplete="off">
 
