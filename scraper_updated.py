@@ -59,7 +59,7 @@ def search_nc_businesses(company_names):
                 print(f"Starting search for: {company}")
                 
                 # Wait for search results page to load
-                time.sleep(3)  # Keep the pause for stability
+                time.sleep(2)  # Keep the pause for stability
                 
                 # Find the wrapper div and get the first span with the record count
                 wrapper = driver.find_element(By.CLASS_NAME, "usa-section")
@@ -170,6 +170,7 @@ def extract_field(content_div, field_label):
         return ""
 
 search_results = search_nc_businesses(company_names)
+# result to a list
 ncsos_result = pd.DataFrame(search_results, columns=['Company', 'Records', 'Sosid', 'Date Formed', 'Status'])
 ncsos_result.to_csv('ncsos_results.csv', index=False)
 while True:
