@@ -171,7 +171,7 @@ def extract_field(content_div, field_label):
 
 search_results = search_nc_businesses(company_names)
 # result to a list
-ncsos_result = pd.DataFrame(search_results, columns=['Company', 'Records', 'Sosid', 'Date Formed', 'Status'])
+ncsos_result = pd.DataFrame(search_results, columns=['Legal Name', 'Records Found', 'SOSID', 'Date Formed', 'Status'])
 ncsos_result.to_csv('ncsos_results.csv', index=False)
 while True:
     pass
