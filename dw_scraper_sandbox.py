@@ -8,7 +8,7 @@ from selenium.webdriver.support import expected_conditions as EC
 import time
 
 def DW_business_search(company_name: str):
-    service = Service(executable_path = "chromedriver.exe")
+    service = Service(executable_path = "/home/r_james/Downloads/chromedriver-linux64/chromedriver")
     driver = webdriver.Chrome(service = service)
 # <input id="SearchCriteria" name="SearchCriteria" type="text" value="" autocomplete="off">
     try:
@@ -32,7 +32,7 @@ def DW_business_search(company_name: str):
         except:
                 return f"Records available for {company_name}."
     finally:
-        driver.quit
+        driver.quit()
         
 file_path = "AI project - Confidential UNC Startups 10162024.xls (1).csv"
 
